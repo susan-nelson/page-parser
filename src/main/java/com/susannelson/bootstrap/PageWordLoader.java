@@ -3,9 +3,11 @@ package com.susannelson.bootstrap;
 import com.susannelson.domain.Page;
 import com.susannelson.domain.PageWord;
 import com.susannelson.repositories.PageRepository;
-import com.susannelson.repositories.PageWordRepository;
+import com.susannelson.server.PageParserService;
+import com.susannelson.server.PageParserServiceImpl;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
@@ -18,37 +20,38 @@ public class PageWordLoader implements ApplicationListener<ContextRefreshedEvent
 
     private static final Logger log = Logger.getLogger(PageWordLoader.class);
 
+    @Value("${url}")
+    private String url = "http://www.yahoo.com";
+    private PageParserService service;
     private PageRepository pageRepository;
-    private PageWordRepository pageWordrepository;
 
     @Autowired
-    public void setRepository(PageRepository pageRepository, PageWordRepository pageWordrepository) {
+    public void setRepository(PageRepository pageRepository) {
         this.pageRepository = pageRepository;
-        this.pageWordrepository = pageWordrepository;
     }
 
+    @Autowired
+    public void setService(PageParserService service) {
+        this.service = service;
+    }
+
+    /**
+     * Accesses the PageParserService for the configured url to parse text and persist word counts.
+     * Runs after application startup is complete.
+     * Logs the title of the page that was accessed.
+     * Catches and logs any exceptions.
+     * @see ContextRefreshedEvent
+     * @param event - the ContextRefreshedEvent
+     */
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
 
-        PageWord word1 = new PageWord();
-        word1.setWord("word1");
-        word1.setCount(1);
+        try {
+            String title = service.parseAndPersistPageWordCounts(url);
 
-        PageWord word2 = new PageWord();
-        word2.setWord("word2");
-        word2.setCount(2);
-
-        Page page = new Page();
-        page.setUrl("http://www.yahoo.com");
-
-        Set<PageWord> words = new HashSet<>();
-        words.add(word1);
-        words.add(word2);
-
-        page.setWords(words);
-
-        pageRepository.save(page);
-
-        log.info("Saved page - id: " + page.getId());
+            log.info("Page processed, title: " + title + " at url: " + url);
+        } catch (Exception e) {
+            log.error("Page was not processed for url: " + url, e);
+        }
     }
 }

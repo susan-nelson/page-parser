@@ -5,6 +5,10 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
+/**
+ * Represents a single unique word and its frequency on a page.
+ * @see Page
+ */
 @Entity
 public class PageWord {
 

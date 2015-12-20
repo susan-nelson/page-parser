@@ -3,6 +3,10 @@ package com.susannelson.domain;
 import javax.persistence.*;
 import java.util.Set;
 
+/**
+ * Represents a single HTML page and all of the unique words in text on the page.
+ * @see PageWord
+ */
 @Entity
 public class Page {
 

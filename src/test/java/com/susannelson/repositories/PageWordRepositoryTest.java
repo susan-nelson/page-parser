@@ -19,37 +19,42 @@ import static org.junit.Assert.*;
 public class PageWordRepositoryTest {
 
     private PageRepository pageRepository;
-    private PageWordRepository pageWordrepository;
 
     @Autowired
-    public void setPageWordRepository(PageRepository pageRepository, PageWordRepository pageWordrepository) {
+    public void setPageWordRepository(PageRepository pageRepository) {
 
         this.pageRepository = pageRepository;
-        this.pageWordrepository = pageWordrepository;
     }
 
     @Test
     public void savePage() {
 
-        PageWord word = new PageWord();
-        word.setWord("word");
-        word.setCount(1);
+        PageWord word1 = new PageWord();
+        word1.setWord("word");
+        word1.setCount(1);
 
-        assertNull(word.getId()); //null before save
-        pageWordrepository.save(word);
-        assertNotNull(word.getId()); //not null after save
+        PageWord word2 = new PageWord();
+        word2.setWord("word");
+        word2.setCount(2);
 
         Page page = new Page();
         page.setUrl("http://www.yahoo.com");
 
         Set<PageWord> words = new HashSet<>();
-        words.add(word);
+        words.add(word1);
+        words.add(word2);
 
         page.setWords(words);
 
         assertNull(page.getId()); //null before save
+        assertNull(word1.getId()); //null before save
+        assertNull(word2.getId()); //null before save
+
         pageRepository.save(page);
+
         assertNotNull(page.getId()); //not null after save
+        assertNotNull(word1.getId()); //not null after save
+        assertNotNull(word2.getId()); //not null after save
 
         //fetch from DB
         Page fetchedPage = pageRepository.findOne(page.getId());
@@ -60,9 +65,10 @@ public class PageWordRepositoryTest {
         //should equal
         assertEquals(page.getId(), fetchedPage.getId());
         assertEquals(page.getUrl(), fetchedPage.getUrl());
+        assertEquals(page.getWords().size(), 2);
 
         //update description and save
-        //fetchedPage.setDescription("New Description");
+        fetchedPage.setUrl("http://www.google.com");
         pageRepository.save(fetchedPage);
 
         //get from DB, should be updated
@@ -76,12 +82,19 @@ public class PageWordRepositoryTest {
         //get all pages, list should only have one
         Iterable<Page> pages = pageRepository.findAll();
 
-        int count = 0;
+        pageCount = 0;
+        int pageWordCount = 0;
 
         for(Page p : pages){
-            count++;
+
+            if (p != null) {
+
+                pageCount++;
+                pageWordCount = (p.getWords() == null) ? pageWordCount : pageWordCount + p.getWords().size();
+            }
         }
 
-        assertEquals(count, 1);
+        assertEquals(pageCount, 1);
+        assertEquals(pageWordCount, 2);
     }
 }
